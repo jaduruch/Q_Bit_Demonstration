@@ -30,7 +30,7 @@ The project was inspired by a similar demonstration I encountered at **Quantum A
 A **qubit** is the fundamental building block of quantum computers, behaving in ways classical bits never could. Unlike ordinary bits, qubits can represent both 0 and 1 simultaneously through the phenomenon of superposition. Visualizing these states is much easier with the Bloch sphere:
 
 <p align="center">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Bloch_sphere.svg/350px-Bloch_sphere.svg.png" alt="Bloch Sphere" width="350">
+  <img src="https://publish-01.obsidian.md/access/14cfbb8788a60a83267c9a52339c8bdd/Quantum%20Mechanics/File%20Repository/blochsphere.png" alt="Bloch Sphere" width="350">
 </p>
 <sup>Image credit: [Wikipedia](https://en.wikipedia.org/wiki/Bloch_sphere)</sup>
 
