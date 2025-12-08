@@ -1,6 +1,6 @@
 # Q_Bit Demonstration
 
-Welcome to **Q_Bit Demonstration**—an educational tool designed to visually and interactively explain and showcase the basics of quantum bits (qubits). This repository is a playground for anyone curious about quantum computing and gives both a conceptual and practical grasp of the qubit.
+Welcome to **Q_Bit Demonstration** an educational tool designed to visually and interactively explain and showcase the basics of quantum bits (qubits). This repository is a playground for anyone curious about quantum computing and gives both a conceptual and practical grasp of the qubit.
 
 ---
 
