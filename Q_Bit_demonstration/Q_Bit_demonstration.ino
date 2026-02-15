@@ -21,6 +21,7 @@
 // -- pin definitions --------------------------------------------------
 #define PIN_JOYSTICK_Y 14
 #define PIN_BUTTON 12
+ #define PIN_RELAY 32  // umloeten
 
 // -- stepper definitions ---------------------------------------------
 #define STEPS_PER_REVOLUTION 2048
@@ -34,7 +35,7 @@
 Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // -- gates ------------------------------------------------------------
-char gates[] = {'A', 'X', 'Y', 'Z'};
+char gates[] = {'X', 'Y', 'Z', 'H', 'R'};
 const int gateCount = sizeof(gates) / sizeof(gates[0]);
 int gateIndex = 0;
 
@@ -47,6 +48,7 @@ bool OldButton;
 // -- steppers ---------------------------------------------------------
 Stepper Stepper1(STEPS_PER_REVOLUTION, 16, 17, 18, 19);       // IN1, IN3, IN2, IN4
 Stepper Stepper2(STEPS_PER_REVOLUTION, 15, 0, 2, 4);          // IN1, IN3, IN2, IN4
+Stepper Stepper3(STEPS_PER_REVOLUTION, 27, 26, 25, 23);          // IN1, IN3, IN2, IN4
 
 // -------------------------------------------------------------------
 void setup()
@@ -56,6 +58,7 @@ void setup()
   // Buttons
   pinMode(PIN_JOYSTICK_Y, INPUT);
   pinMode(PIN_BUTTON, INPUT_PULLUP);
+  pinMode(PIN_RELAY, OUTPUT);
 
   // Steppers
   Stepper1.setSpeed(ROLE_PER_MINUTE);
@@ -80,19 +83,20 @@ void loop()
 {
   // -- read buttons --------------------------
   JoystickY = analogRead(PIN_JOYSTICK_Y);
+  // Serial.print("Joystick pos: ");Serial.println(JoystickY);
   Button = digitalRead(PIN_BUTTON);
 
   // -------- BUTTON X (Gate wechseln) --------
   if (JoystickY > 2800 && OldJoystickY <= 2800) {
     gateIndex = (gateIndex + 1) % gateCount;
-    Serial.print("Gate: ");
-    Serial.println(gates[gateIndex]);
+    // Serial.print("Gate: ");
+    // Serial.println(gates[gateIndex]);
   }
 
   if (JoystickY < 1200 && OldJoystickY >= 1200) {
     gateIndex = (gateIndex - 1 + gateCount) % gateCount;
-    Serial.print("Gate: ");
-    Serial.println(gates[gateIndex]);
+    // Serial.print("Gate: ");
+    // Serial.println(gates[gateIndex]);
   }
   
 
@@ -101,39 +105,58 @@ void loop()
 
   if(Button > OldButton)
   {
-    switch (gateIndex + 1) 
+    Serial.println("Button!");
+    digitalWrite(PIN_RELAY, HIGH);
+    switch (gates[gateIndex]) 
     {
-      case 1:           // A
-          Serial.println("Rotation in A");
-      break;
 
-      case 2:           // X
+      case 'X':           // X
           Serial.println("Rotation in X");
           // 1: -0.5; 2: 1; 3: -0.5
           Stepper1.step(-STEPS_PER_REVOLUTION/2);
           Stepper2.step(STEPS_PER_REVOLUTION);
+          Stepper3.step(-STEPS_PER_REVOLUTION/2);
       break;
 
-      case 3:
+      case 'Y':
           Serial.println("Rotation in Y");
           // 1: -sqrt3 / 2; 2: 0; 3: sqrt3 / 2
-          Stepper2.step(-STEPS_PER_REVOLUTION * pow(3, 0.5)/2); // -sqrt3 / 2
+          Stepper1.step(-STEPS_PER_REVOLUTION * pow(3, 0.5)/2); // -sqrt3 / 2
           Stepper2.step(STEPS_PER_REVOLUTION*0);
+          Stepper3.step(STEPS_PER_REVOLUTION * pow(3, 0.5)/2); // sqrt3 / 2
       break;
 
-      case 4:
+      case 'Z':
           Serial.println("Rotation in Z");
           // 1: 1; 2: 1; 3: 1
           Stepper1.step(STEPS_PER_REVOLUTION);
           Stepper2.step(STEPS_PER_REVOLUTION);
+          Stepper3.step(STEPS_PER_REVOLUTION);
+      break;
+
+      case 'H':
+          Serial.println("Rotation in H");
+          // 1: -sqrt3 / 4; 2: 0; 3: sqrt3 / 4
+          Stepper1.step(STEPS_PER_REVOLUTION);
+          Stepper2.step(STEPS_PER_REVOLUTION);
+          Stepper3.step(STEPS_PER_REVOLUTION);
+      break;
+
+      case 'R':
+          Serial.println("Rotation in R");
+          // 1: 1; 2: 1; 3: 1
+          Stepper1.step(STEPS_PER_REVOLUTION);
+          Stepper2.step(STEPS_PER_REVOLUTION);
+          Stepper3.step(STEPS_PER_REVOLUTION);
       break;
 
       default:
           Serial.println("error");
     }
+    digitalWrite(PIN_RELAY, LOW);
     
   }
-  
+  // Serial.print("prev: ");Serial.print(OldButton);Serial.print(" new: ");Serial.println(Button);
 
   OldJoystickY = JoystickY;
   OldButton = Button;
