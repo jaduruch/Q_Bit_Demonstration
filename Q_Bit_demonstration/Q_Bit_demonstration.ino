@@ -21,7 +21,7 @@
 // -- pin definitions --------------------------------------------------
 #define PIN_JOYSTICK_Y 14
 #define PIN_BUTTON 12
- #define PIN_RELAY 32  // umloeten
+ #define PIN_RELAY 32
 
 // -- stepper definitions ---------------------------------------------
 #define STEPS_PER_REVOLUTION 2048
@@ -48,7 +48,7 @@ bool OldButton;
 // -- steppers ---------------------------------------------------------
 Stepper Stepper1(STEPS_PER_REVOLUTION, 16, 17, 18, 19);       // IN1, IN3, IN2, IN4
 Stepper Stepper2(STEPS_PER_REVOLUTION, 15, 0, 2, 4);          // IN1, IN3, IN2, IN4
-Stepper Stepper3(STEPS_PER_REVOLUTION, 27, 26, 25, 23);          // IN1, IN3, IN2, IN4
+Stepper Stepper3(STEPS_PER_REVOLUTION, 27, 26, 25, 5);          // IN1, IN3, IN2, IN4
 
 // -------------------------------------------------------------------
 void setup()
@@ -63,6 +63,7 @@ void setup()
   // Steppers
   Stepper1.setSpeed(ROLE_PER_MINUTE);
   Stepper2.setSpeed(ROLE_PER_MINUTE);
+  Stepper3.setSpeed(ROLE_PER_MINUTE);
 
   // I2C
   Wire.begin(21, 22);
@@ -84,7 +85,7 @@ void loop()
   // -- read buttons --------------------------
   JoystickY = analogRead(PIN_JOYSTICK_Y);
   // Serial.print("Joystick pos: ");Serial.println(JoystickY);
-  Button = digitalRead(PIN_BUTTON);
+  Button = !digitalRead(PIN_BUTTON);
 
   // -------- BUTTON X (Gate wechseln) --------
   if (JoystickY > 2800 && OldJoystickY <= 2800) {
@@ -113,25 +114,39 @@ void loop()
       case 'X':           // X
           Serial.println("Rotation in X");
           // 1: -0.5; 2: 1; 3: -0.5
-          Stepper1.step(-STEPS_PER_REVOLUTION/2);
+          /*Stepper1.step(-STEPS_PER_REVOLUTION/2);
           Stepper2.step(STEPS_PER_REVOLUTION);
-          Stepper3.step(-STEPS_PER_REVOLUTION/2);
+          Stepper3.step(-STEPS_PER_REVOLUTION/2);*/
+          moveSteppers(
+            -STEPS_PER_REVOLUTION / 2,
+            STEPS_PER_REVOLUTION,
+            -STEPS_PER_REVOLUTION / 2
+          );
       break;
 
       case 'Y':
           Serial.println("Rotation in Y");
           // 1: -sqrt3 / 2; 2: 0; 3: sqrt3 / 2
-          Stepper1.step(-STEPS_PER_REVOLUTION * pow(3, 0.5)/2); // -sqrt3 / 2
+          /*Stepper1.step(-STEPS_PER_REVOLUTION * pow(3, 0.5)/2); // -sqrt3 / 2
           Stepper2.step(STEPS_PER_REVOLUTION*0);
-          Stepper3.step(STEPS_PER_REVOLUTION * pow(3, 0.5)/2); // sqrt3 / 2
+          Stepper3.step(STEPS_PER_REVOLUTION * pow(3, 0.5)/2); // sqrt3 / 2*/
+          moveSteppers(
+            -STEPS_PER_REVOLUTION * 0.866, // sqrt(3)/2
+            0,
+            STEPS_PER_REVOLUTION * 0.866
+          );
       break;
 
       case 'Z':
           Serial.println("Rotation in Z");
           // 1: 1; 2: 1; 3: 1
-          Stepper1.step(STEPS_PER_REVOLUTION);
-          Stepper2.step(STEPS_PER_REVOLUTION);
-          Stepper3.step(STEPS_PER_REVOLUTION);
+          for(int i = 0; i < STEPS_PER_REVOLUTION; i++)
+          {
+            Stepper1.step(1);
+            Stepper2.step(1);
+            Stepper3.step(1);
+          }
+          
       break;
 
       case 'H':
@@ -194,4 +209,39 @@ void drawGateSelection()
   display.print(gates[rightIndex]);
 
   display.display();
+}
+
+void moveSteppers(long s1, long s2, long s3) {
+  long maxSteps = max(abs(s1), max(abs(s2), abs(s3)));
+
+  float acc1 = 0, acc2 = 0, acc3 = 0;
+
+  float inc1 = (float)abs(s1) / maxSteps;
+  float inc2 = (float)abs(s2) / maxSteps;
+  float inc3 = (float)abs(s3) / maxSteps;
+
+  int dir1 = (s1 >= 0) ? 1 : -1;
+  int dir2 = (s2 >= 0) ? 1 : -1;
+  int dir3 = (s3 >= 0) ? 1 : -1;
+
+  for (long i = 0; i < maxSteps; i++) {
+    acc1 += inc1;
+    acc2 += inc2;
+    acc3 += inc3;
+
+    if (acc1 >= 1) {
+      Stepper1.step(dir1);
+      acc1 -= 1;
+    }
+    if (acc2 >= 1) {
+      Stepper2.step(dir2);
+      acc2 -= 1;
+    }
+    if (acc3 >= 1) {
+      Stepper3.step(dir3);
+      acc3 -= 1;
+    }
+
+    // delayMicroseconds(1000); // Geschwindigkeit anpassen!
+  }
 }
